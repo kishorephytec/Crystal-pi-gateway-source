@@ -1,0 +1,12 @@
+#
+# MQTT brocker Settings
+#
+mqtt_hostname: "3.111.218.142"
+mqtt_port: 1883
+mqtt_username: mqttmasteruser
+mqtt_password: pbGKlDnMj89k8t34KpNRuCH8WPv5G85KhF1
+mqtt_force_unsecure: true
+#
+# Gateway settings
+#
+gateway_id: raka-gateway-1
