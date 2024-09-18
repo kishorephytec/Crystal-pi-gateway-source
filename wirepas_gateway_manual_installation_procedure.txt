@@ -1,0 +1,248 @@
+AUTHOR:SRIKANTH JOGI
+DATE:14th SEP 2023
+
+
+Prerequesites:
+***************
+
+sudo apt update && sudo apt upgrade
+
+sudo apt install libsystemd-dev
+
+apt-get install pkg-config
+
+sudo apt-get install python3-pip
+
+sudo pip install pkgconfig
+
+sudo apt install python3-gi
+
+Note:
+******
+ If u are installing in rasberry pi facing any issues while installing pip related packages use below command to install packages
+
+apt install python3-xyz
+
+where xyz is the package you are trying to
+install.
+
+   
+pip install PyYAML==5.4.1 
+pip install paho-mqtt==1.4.0
+pip install protobuf==3.14.0
+pip install six==1.16.0
+pip install pydbus==0.6.0
+pip install wheel==0.34.2
+
+sudo apt-get install protobuf-compiler
+
+Download wirepas-gateway package:
+**********************************
+
+wget https://files.pythonhosted.org/packages/bf/1f/32991f3dddf2f238d6bb337dd49d17ce7ee43cb03fd30790a98186036878/wirepas_gateway-1.4.2.tar.gz
+
+tar -xvf wirepas_gateway-1.4.2.tar.gz
+
+cd wirepas_gateway-1.4.2
+
+file : wirepas_gateway/dbus/c-extension/dbus_c.c
+
+1) dbus c extention fle modication
+
+func : on_packet_received()
+
+      -  uint32_t src_addr, dst_addr;
+      -  uint8_t src_ep, dst_ep;
+      +  uint64_t src_addr, dst_addr;
+      +  uint16_t src_ep, dst_ep;
+
+
+2) Python build value pattern change
+
+func : on_packet_received()
+
+      - arglist = Py_BuildValue("(sLIIBBIBBy#)",
+      + arglist = Py_BuildValue("(sLKKHHIBBy#)",
+
+ 3)
+       r = sd_bus_message_read("txxqquyy"),
+       
+       
+
+from wirepas_gateway-1.4.2 directory give below commands 
+
+   $ python3 setup.py sdist bdist_wheel
+
+cp build/lib.linux-armv7l-3.9/dbusCExtension.cpython-39-arm-linux-gnueabihf.so /usr/lib/python3/dist-packages/
+
+cp -r wirepas_gateway wirepas_gateway.egg-info /usr/lib/python3/dist-packages/
+
+NOTE:   before copying check your pathon packages location and that location only you should copy above mentioned wirepas packages.
+******
+
+
+Download wirepas meshmessaging packages:
+*****************************************
+
+wget https://files.pythonhosted.org/packages/92/9f/074a1c4ce1e6db6539ea97d4039b04954151d868ba1fc503ef913abf02de/wirepas_mesh_messaging-1.1.tar.gz
+
+tar -xvf wirepas_mesh_messaging-1.1.tar.gz
+
+cd wirepas_mesh_messaging
+
+cp -r wirepas_mesh_messaging wirepas_mesh_messaging.egg-info /usr/lib/python3/dist-packages/
+
+NOTE:   before copying check your pathon packages location and that location only you should copy above mentioned wirepas packages.
+*****
+
+
+Download Protobuff files:
+**************************
+wget https://github.com/wirepas/backend-apis/archive/refs/tags/gw-v1.4.0.zip
+
+unzip gw-v1.4.0.zip
+
+cd backend-apis-gw-v1.4.0/gateway_to_backend/protocol_buffers_files/
+
+file----- backend-apis-gw-v1.4.0/gateway_to_backend/protocol_buffers_files/data_message.proto
+
+data_message.proto---file------modifications:
+
+  1) func : SendPacketReq()
+
+       -  required uint32 destination_address
+       +  required uint64 destination_address
+
+  2) func  : PacketReceivedEvent()
+
+          -  required uint32 source_address 
+          -  required uint32 destination_address
+          +  required uint64 source_address 
+          +  required uint64 destination_address
+
+Then give below commands
+
+protoc -I=. --python_out=. config_message.proto
+protoc -I=. --python_out=. data_message.proto
+protoc -I=. --python_out=. error.proto
+protoc -I=. --python_out=. generic_message.proto
+protoc -I=. --python_out=. nanopb.proto
+protoc -I=. --python_out=. otap_message.proto
+protoc -I=. --python_out=. wp_global.proto
+
+cp -r config_message_pb2.py data_message_pb2.py error_pb2.py generic_message_pb2.py otap_message_pb2.py wp_global_pb2.py /usr/lib/python3/dist-packages/wirepas_mesh_messaging/proto/
+
+NOTE:   before copying check your pathon packages location and that location only you should copy above mentioned wirepas packages.
+******
+
+
+SD-bus configuration :
+********************
+1) Download com.wirepas.sink.conf file from below link
+
+ 
+
+         $ wget https://raw.githubusercontent.com/wirepas/gateway/master/sink_service/com.wirepas.sink.conf
+
+ 
+
+2) Replace wirepas with your board user name in the below line of com.wirepas.sink.conf file here i have updated with root
+
+ 
+
+         $ sed -i 's/user="wirepas"/user="root"/g' com.wirepas.sink.conf
+
+ 
+
+      Note : In above command you have to replace root with your boards user name
+
+ 
+
+3) Copy this file into your board and move to system.d
+
+ 
+
+         $ sudo mv com.wirepas.sink.conf /etc/dbus-1/system.d/
+
+
+4) Create a file with name transport_settings.yml  under your project folder(Rb_gateway) and copy below content and save it.
+
+ 
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+#
+
+# MQTT brocker Settings
+
+#
+
+mqtt_hostname: "192.168.11.129"
+
+mqtt_port: 1883
+
+mqtt_username: None
+
+mqtt_password: None
+
+mqtt_force_unsecure: true
+
+#
+
+# Gateway settings
+
+#
+
+gateway_id: Rbimx6UL
+
+---------------------------------------------------------------------------------------------------------------------------
+         
+(optional)
+***********
+Mosquito broker installation debian 11 :
+
+***************************************
+
+sudo apt update && sudo apt upgrade
+
+ 
+
+sudo apt install -y mosquitto mosquitto-clients
+
+ 
+
+mosquitto -v
+
+ 
+
+ 
+
+Testing by sending meassages
+
+****************************
+
+ 
+
+In one terminal 
+
+mosquitto_sub -h 192.168.1.77 -d -t testTopic
+
+ 
+
+In second terminal
+
+mosquitto_pub -h 192.168.1.77 -d -t testTopic -m "Hello world!"
+
+ 
+
+ 
+
+
+
+
+
+
+
+
+
+
